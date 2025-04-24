@@ -1,0 +1,63 @@
+name: Pull Requests to Single Pull Request
+description: Combine pull requests into a single pull request.
+author: clhore
+
+branding:
+  icon: 'git-merge'
+  color: 'green'
+
+inputs:
+  github_token:
+    description: GitHub Auth Token
+    required: true
+  github_repository:
+    description: Repository name in the format 'owner/repo'
+    required: false
+    default: ${{ github.repository }}
+  base_branch:
+    description: Base branch to merge PRs
+    required: true
+    default: main
+  combine_branch:
+    description: Name of the new merged branch
+    required: true
+    default: combine-dependabot
+  pr_user:
+    description: Pull request user
+    required: false
+    default: dependabot[bot]
+  output_json:
+    description: JSON output file
+    required: false
+    default: output.json
+
+runs:
+  using: "composite"
+  steps:
+    - name: Config Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Copiar archivos de acción
+      run: |
+        cp "${{ github.action_path }}/main.py" ./main.py
+        cp "${{ github.action_path }}/requirements.txt" ./requirements.txt
+      shell: bash
+
+    - name: Instalar dependencias
+      run: |
+        pip install -r requirements.txt
+      shell: bash
+    
+    - name: Combine Pull Requests
+      run: |
+        python main.py
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+        BASE_BRANCH: ${{ inputs.base_branch }}
+        COMBINE_BRANCH: ${{ inputs.combine_branch }}
+        PR_USER: ${{ inputs.pr_user }}
+        REPO: ${{ inputs.github_repository }}
+        OUTPUT_JSON: ${{ inputs.output_json }}
